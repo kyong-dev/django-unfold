@@ -72,6 +72,11 @@ module.exports = {
   },
   plugins: [require("@tailwindcss/typography")],
   safelist: [
+    "border-l",
+    "flex-grow",
+    "pb-0",
+    "w-96",
+    "max-w-96",
     "md:border-0",
     "md:border-r",
     "md:w-48",
