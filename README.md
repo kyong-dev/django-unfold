@@ -90,6 +90,8 @@ pip install setuptools wheel twine build
 ```
 
 ```bash
+git fetch
+
 python -m build  
 twine upload dist/*
 ```
