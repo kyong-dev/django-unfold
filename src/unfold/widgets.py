@@ -52,10 +52,12 @@ CHECKBOX_LABEL_CLASSES = [
 
 BASE_CLASSES = [
     "border",
+    "border-base-200",
     "bg-white",
     "font-medium",
     "min-w-20",
-    "rounded-md",
+    "placeholder-base-400",
+    "rounded",
     "shadow-sm",
     "text-font-default-light",
     "text-sm",
@@ -148,7 +150,7 @@ CHECKBOX_CLASSES = [
     "cursor-pointer",
     "h-4",
     "relative",
-    "rounded",
+    "rounded-[4px]",
     "shadow-sm",
     "w-4",
     "hover:border-base-400",
@@ -519,7 +521,7 @@ class UnfoldAdminRadioSelectWidget(AdminRadioSelect):
             radio_style = VERTICAL
 
         self.radio_style = radio_style
-        self.attrs = {"class": " ".join(RADIO_CLASSES)}
+        self.attrs["class"] = " ".join([*RADIO_CLASSES, self.attrs.get("class", "")])
 
     def get_context(self, *args, **kwargs) -> Dict[str, Any]:
         context = super().get_context(*args, **kwargs)
