@@ -120,3 +120,37 @@
         {% endif %}
     </div>
 {% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select all table rows with a class of block
+        const rows = document.querySelectorAll('#result_list > tbody > tr');
+    
+        // Add click event listener to each row
+        rows.forEach(row => {
+            row.querySelectorAll('td').forEach(td => {
+                if (!td.querySelector('a')) {
+                    td.addEventListener('click', function(event) {
+                        // Check if the clicked element is already input of type checkbox
+                        if (event.target.type !== 'checkbox') {
+                            // Get the checkbox within this row
+                            const checkbox = row.querySelector('input[type="checkbox"]');
+            
+                            // Toggle the checkbox state
+                            if (checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                            }
+                            // Add the highlight class to the row
+                            row.classList.add('highlight');
+            
+                            // Remove the highlight class after a short delay
+                            setTimeout(() => {
+                                row.classList.remove('highlight');
+                            }, 300); // Duration the highlight stays
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
