@@ -6,7 +6,7 @@ description: Customize admin dashboard with your own charts and components.
 
 # Admin dashboard
 
-Create `templates/admin/index.html` in your project and paste the base template below into it. By default, all your custom styles here are not compiled because CSS classes are located in your specific project. Here it is needed to set up the Tailwind for your project and all required instructions are located in [Project Level Tailwind Stylesheet](#project-level-tailwind-stylesheet) chapter.
+Create `templates/admin/index.html` in your project and paste the base template below into it. By default, all your custom styles here are not compiled because CSS classes are located in your specific project. Here it is needed to set up the Tailwind for your project and all required instructions are located in [Project Level Tailwind Stylesheet](https://unfoldadmin.com/docs/styles-scripts/customizing-tailwind/) chapter.
 
 Ensure you have set up the template directory in `settings.py`
 
@@ -22,7 +22,7 @@ TEMPLATES = [
 ```html
 {% extends 'unfold/layouts/base_simple.html' %}
 
-{% load cache humanize i18n %}
+{% load i18n %}
 
 {% block breadcrumbs %}{% endblock %}
 
@@ -35,11 +35,7 @@ TEMPLATES = [
 {% endblock %}
 
 {% block branding %}
-    <h1 id="site-name">
-        <a href="{% url 'admin:index' %}">
-            {{ site_header|default:_('Django administration') }}
-        </a>
-    </h1>
+    {% include "unfold/helpers/site_branding.html" %}
 {% endblock %}
 
 {% block content %}
