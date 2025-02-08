@@ -64,11 +64,11 @@ class RangeDateFilter(admin.FieldListFilter):
 
         value_from = self.used_parameters.get(self.parameter_name + "_from")
         if value_from not in EMPTY_VALUES:
-            filters.update({self.parameter_name + "__gte": parse_date_str(value_from)})
+            filters.update({self.parameter_name + "__date__gte": parse_date_str(value_from)})
 
         value_to = self.used_parameters.get(self.parameter_name + "_to")
         if value_to not in EMPTY_VALUES:
-            filters.update({self.parameter_name + "__lte": parse_date_str(value_to)})
+            filters.update({self.parameter_name + "__date__lte": parse_date_str(value_to)})
 
         try:
             return queryset.filter(**filters)
