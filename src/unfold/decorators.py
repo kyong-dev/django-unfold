@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Iterable, Optional, Union
+from collections.abc import Iterable
+from typing import Any, Callable, Optional, Union
 
 from django.contrib.admin.options import BaseModelAdmin
 from django.core.exceptions import PermissionDenied
@@ -15,7 +16,8 @@ def action(
     permissions: Optional[Iterable[str]] = None,
     description: Optional[str] = None,
     url_path: Optional[str] = None,
-    attrs: Optional[Dict[str, Any]] = None,
+    attrs: Optional[dict[str, Any]] = None,
+    icon: Optional[str] = None,
 ) -> ActionFunction:
     def decorator(func: Callable) -> ActionFunction:
         def inner(
@@ -32,8 +34,14 @@ def action(
                 # Permissions methods have following syntax: has_<some>_permission(self, request, obj=None):
                 # But obj is not examined by default in django admin and it would also require additional
                 # fetch from database, therefore it is not supported yet
-                if not any(
+                has_object_argument = (
+                    func.__name__ in model_admin.actions_detail
+                    or func.__name__ in model_admin.actions_submit_line
+                )
+                if not all(
                     has_permission(request, kwargs.get("object_id"))
+                    if has_object_argument
+                    else has_permission(request)
                     for has_permission in permission_checks
                 ):
                     raise PermissionDenied
@@ -41,10 +49,16 @@ def action(
 
         if permissions is not None:
             inner.allowed_permissions = permissions
+
         if description is not None:
             inner.short_description = description
+
         if url_path is not None:
             inner.url_path = url_path
+
+        if icon is not None:
+            inner.icon = icon
+
         inner.attrs = attrs or {}
         return inner
 
@@ -62,7 +76,7 @@ def display(
     ordering: Optional[Union[str, Combinable, BaseExpression]] = None,
     description: Optional[str] = None,
     empty_value: Optional[str] = None,
-    label: Optional[Union[bool, str, Dict[str, str]]] = None,
+    label: Optional[Union[bool, str, dict[str, str]]] = None,
     header: Optional[bool] = None,
 ) -> Callable:
     def decorator(func: Callable[[Model], Any]) -> Callable:

@@ -32,7 +32,9 @@
         el.id = el.id.replace(id_regex, replacement);
       }
       if (el.name) {
-        el.name = el.name.replace(id_regex, replacement);
+        // !CHANGED from original
+        // el.name = el.name.replace(id_regex, replacement);
+        el.setAttribute("name", el.name.replace(id_regex, replacement));
       }
     };
     const totalForms = $("#id_" + options.prefix + "-TOTAL_FORMS").prop(
@@ -252,9 +254,9 @@
     const showAddButton =
       maxForms.val() === "" || maxForms.val() - totalForms.val() > 0;
     if ($this.length && showAddButton) {
-      addButton.parent().parent().show(); // !CHANGED from original
+      addButton.parent().show();
     } else {
-      addButton.parent().parent().hide(); // !CHANGED from original
+      addButton.parent().hide();
     }
 
     return this;

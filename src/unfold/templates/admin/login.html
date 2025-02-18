@@ -29,22 +29,26 @@
             <div class="w-full sm:w-96">
                 <h1 class="font-semibold mb-10">
                     <span class="block text-font-important-light dark:text-font-important-dark">{% trans 'Welcome back to' %}</span>
-                    <span class="block text-primary-600 text-xl dark:text-primary-500">{{ site_title }}</span>
+                    <span class="block text-primary-600 text-xl dark:text-primary-500">{{ site_title|default:_('Django site admin') }}</span>
                 </h1>
 
                 {% include "unfold/helpers/messages.html" %}
 
-                {% include "unfold/helpers/messages/errornote.html" with errors=form.errors %}
+                {% if form.errors or form.non_field_errors %}
+                    <div class="flex flex-col gap-4 mb-8 *:mb-0">
+                        {% include "unfold/helpers/messages/errornote.html" with errors=form.errors %}
 
-                {% include "unfold/helpers/messages/error.html" with errors=form.non_field_errors %}
+                        {% include "unfold/helpers/messages/error.html" with errors=form.non_field_errors %}
 
-                {% if user.is_authenticated %}
-                    {% blocktranslate trimmed asvar message %}
-                        You are authenticated as {{ username }}, but are not authorized to
-                        access this page. Would you like to login to a different account?
-                    {% endblocktranslate %}
+                        {% if user.is_authenticated %}
+                            {% blocktranslate trimmed asvar message %}
+                                You are authenticated as {{ username }}, but are not authorized to
+                                access this page. Would you like to login to a different account?
+                            {% endblocktranslate %}
 
-                    {% include "unfold/helpers/messages/error.html" with error=message %}
+                            {% include "unfold/helpers/messages/error.html" with error=message %}
+                        {% endif %}
+                    </div>
                 {% endif %}
 
                 {% block login_before %}{% endblock %}

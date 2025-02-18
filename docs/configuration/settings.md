@@ -18,6 +18,15 @@ from django.utils.translation import gettext_lazy as _
 UNFOLD = {
     "SITE_TITLE": "Custom suffix in <title> tag",
     "SITE_HEADER": "Appears in sidebar at the top",
+    "SITE_SUBHEADER": "Appears under SITE_HEADER",
+    "SITE_DROPDOWN": [
+        {
+            "icon": "diamond",
+            "title": _("My site"),
+            "link": "https://example.com",
+        },
+        # ...
+    ],
     "SITE_URL": "/",
     # "SITE_ICON": lambda request: static("icon.svg"),  # both modes, optimise for 32px height
     "SITE_ICON": {
@@ -40,6 +49,7 @@ UNFOLD = {
     ],
     "SHOW_HISTORY": True, # show/hide "History" button, default: True
     "SHOW_VIEW_ON_SITE": True, # show/hide "View on site" button, default: True
+    "SHOW_BACK_BUTTON": False, # show/hide "Back" button on changeform in header, default: False
     "ENVIRONMENT": "sample_app.environment_callback",
     "DASHBOARD_CALLBACK": "sample_app.dashboard_callback",
     "THEME": "dark", # Force theme: "dark" or "light". Will disable theme switcher
@@ -53,14 +63,20 @@ UNFOLD = {
     "SCRIPTS": [
         lambda request: static("js/script.js"),
     ],
+    "BORDER_RADIUS": "6px",
     "COLORS": {
-        "font": {
-            "subtle-light": "107 114 128",
-            "subtle-dark": "156 163 175",
-            "default-light": "75 85 99",
-            "default-dark": "209 213 219",
-            "important-light": "17 24 39",
-            "important-dark": "243 244 246",
+        "base": {
+            "50": "249 250 251",
+            "100": "243 244 246",
+            "200": "229 231 235",
+            "300": "209 213 219",
+            "400": "156 163 175",
+            "500": "107 114 128",
+            "600": "75 85 99",
+            "700": "55 65 81",
+            "800": "31 41 55",
+            "900": "17 24 39",
+            "950": "3 7 18",
         },
         "primary": {
             "50": "250 245 255",
@@ -74,6 +90,14 @@ UNFOLD = {
             "800": "107 33 168",
             "900": "88 28 135",
             "950": "59 7 100",
+        },
+        "font": {
+            "subtle-light": "var(--color-base-500)",  # text-base-500
+            "subtle-dark": "var(--color-base-400)",  # text-base-400
+            "default-light": "var(--color-base-600)",  # text-base-600
+            "default-dark": "var(--color-base-300)",  # text-base-300
+            "important-light": "var(--color-base-900)",  # text-base-900
+            "important-dark": "var(--color-base-100)",  # text-base-100
         },
     },
     "EXTENSIONS": {
@@ -104,7 +128,7 @@ UNFOLD = {
                     {
                         "title": _("Users"),
                         "icon": "people",
-                        "link": reverse_lazy("admin:users_user_changelist"),
+                        "link": reverse_lazy("admin:auth_user_changelist"),
                     },
                 ],
             },
