@@ -1,5 +1,5 @@
 from functools import update_wrapper
-from typing import Optional
+from typing import Optional, Tuple, Union, List
 
 from django import forms
 from django.contrib.admin import ModelAdmin as BaseModelAdmin
@@ -21,6 +21,8 @@ from unfold.mixins import ActionModelAdminMixin, BaseModelAdminMixin
 from unfold.overrides import FORMFIELD_OVERRIDES_INLINE
 from unfold.typing import FieldsetsType
 from unfold.widgets import UnfoldBooleanWidget
+
+from unfold.dataclasses import UnfoldAction
 
 checkbox = UnfoldBooleanWidget(
     {
