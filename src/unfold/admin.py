@@ -77,7 +77,6 @@ class ModelAdmin(BaseModelAdminMixin, ActionModelAdminMixin, BaseModelAdmin):
             return self.add_fieldsets
         return super().get_fieldsets(request, obj)
 
-<<<<<<< HEAD
     def getLogMessage(self, form, add=False, formsetObj=None):
         """
         Return a list of messages describing the changes from the admin form.
@@ -239,9 +238,6 @@ class ModelAdmin(BaseModelAdminMixin, ActionModelAdminMixin, BaseModelAdmin):
         ]
 
     def get_custom_urls(self) -> Tuple[Tuple[str, str, View], ...]:
-=======
-    def get_custom_urls(self) -> tuple[tuple[str, str, View], ...]:
->>>>>>> 52c3632c3a1c50998089f3955283d36195f3b135
         """
         Method to get custom views for ModelAdmin with their urls
 
