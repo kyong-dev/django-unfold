@@ -4,10 +4,12 @@ from typing import Any, Optional
 from django.contrib.admin.views.main import ChangeList
 from django.core.validators import EMPTY_VALUES
 from django.db.models import QuerySet
+from django.db.models.fields import BLANK_CHOICE_DASH, Field
 from django.forms import ValidationError
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
+from unfold.admin import ModelAdmin
 from unfold.contrib.filters.forms import (
     AutocompleteDropdownForm,
     DropdownForm,
@@ -123,11 +125,15 @@ class RangeNumericMixin:
 
 
 class AutocompleteMixin:
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def has_output(self) -> bool:
+        return True
 
-        if "request" in kwargs:
-            self.request = kwargs["request"]
+    def field_choices(
+        self, field: Field, request: HttpRequest, model_admin: ModelAdmin
+    ) -> list[tuple[str, str]]:
+        return [
+            ("", BLANK_CHOICE_DASH),
+        ]
 
     def choices(
         self, changelist: ChangeList
