@@ -88,7 +88,11 @@
 {% else %}
     {% include 'unfold/helpers/empty_results.html' %}
 {% endif %}
-
+<style>
+    .highlight {
+        background-color: #f5f5f5;
+    }
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Select all table rows with a class of block
@@ -97,7 +101,7 @@
         // Add click event listener to each row
         rows.forEach(row => {
             row.querySelectorAll('td').forEach(td => {
-                if (!td.querySelector('a') && !td.querySelector('input')) {
+                if (!td.querySelector('a') && !td.querySelector('input') && !td.querySelector('select')) {
                     td.addEventListener('click', function(event) {
                         // Check if the clicked element is already input of type checkbox
                         if (event.target.type !== 'checkbox') {
