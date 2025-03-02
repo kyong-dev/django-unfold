@@ -97,7 +97,7 @@
         // Add click event listener to each row
         rows.forEach(row => {
             row.querySelectorAll('td').forEach(td => {
-                if (!td.querySelector('a')) {
+                if (!td.querySelector('a') && !td.querySelector('input')) {
                     td.addEventListener('click', function(event) {
                         // Check if the clicked element is already input of type checkbox
                         if (event.target.type !== 'checkbox') {
