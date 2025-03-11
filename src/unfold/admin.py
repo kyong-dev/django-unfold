@@ -334,6 +334,16 @@ class ModelAdmin(BaseModelAdminMixin, ActionModelAdminMixin, BaseModelAdmin):
     def get_changelist(self, request, **kwargs):
         return ChangeList
 
+    def history_view(self, request, object_id, extra_context=None):
+        response = super().history_view(request, object_id, extra_context)
+        if hasattr(response, 'context_data'):
+            action_list = response.context_data.get('action_list')
+            if action_list and hasattr(action_list, 'object_list'):
+                object_list = list(action_list.object_list)
+                object_list.sort(key=lambda entry: entry.action_time, reverse=True)
+                action_list.object_list = object_list
+                response.context_data['action_list'] = action_list
+        return response
 
 class TabularInline(BaseModelAdminMixin, BaseTabularInline):
     formfield_overrides = FORMFIELD_OVERRIDES_INLINE
