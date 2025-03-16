@@ -9,5 +9,4 @@ dist/
 *.sqlite3
 .env
 tests/
-CUSTOM_CHANGELOG.md
 pyproject-patrick.toml
