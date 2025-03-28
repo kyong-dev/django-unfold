@@ -17,3 +17,7 @@
 ## 0.51.0 (2025-03-16)
 
 - django admin object history page order by recent action
+
+## 0.53.0 (2025-03-28)
+
+- Table component HTML tags available
