@@ -1,4 +1,21 @@
 
+## 0.56.0 (2025-05-05)
+
+- feat: improved input focus (#1247) ([`8fa21d4`](https://github.com/unfoldadmin/django-unfold/commit/8fa21d4c7969becc6084d82e403883494f0ee774))
+- fix: responsive sidebar background color (#1258) ([`93ac1a4`](https://github.com/unfoldadmin/django-unfold/commit/93ac1a4ce024887262c8e62fccaeafa2b65d9ab8))
+- fix: import export v4 import display (#1257) ([`7fd73d0`](https://github.com/unfoldadmin/django-unfold/commit/7fd73d0c1d3128a0b694b06eb945d3029423c599))
+- fix: input dark color scheme (#1253) ([`b6c3a7b`](https://github.com/unfoldadmin/django-unfold/commit/b6c3a7beccf8d96c065df0357ffd9ff9379d6364))
+- fix: responsive improvements (#1252) ([`5454843`](https://github.com/unfoldadmin/django-unfold/commit/54548435e5d1c0d011d80649d7132fdfba1857c8))
+- fix: select2 focus (#1248) ([`ba1ee3a`](https://github.com/unfoldadmin/django-unfold/commit/ba1ee3a953501aa273ed80bd3036b4bff697c64c))
+- fix: tabular sorting input focus (#1246) ([`51e66dc`](https://github.com/unfoldadmin/django-unfold/commit/51e66dcfdbabc3de9ffc3c353b5a2b5d25f56aca))
+- chore: major semantic release configuration (#1261) ([`36bdfda`](https://github.com/unfoldadmin/django-unfold/commit/36bdfdaa58271f01ab175cb64f238bf065dd2ea4))
+
+## 0.55.3 (2025-04-22)
+
+- fix: default site url (#1233) ([`7fb87b7`](https://github.com/unfoldadmin/django-unfold/commit/7fb87b7b42519c0b898b7dd2de5c8f1f717d2138))
+- fix: inline tabs formset prefix as fragment (#1229) ([`7529256`](https://github.com/unfoldadmin/django-unfold/commit/75292566e00ca1694e3177594feb9afb497b23e5))
+- chore: release flow python version (#1218) ([`5558443`](https://github.com/unfoldadmin/django-unfold/commit/55584435e6e149f9020a458cb2dc0b0311a1b217))
+
 ## 0.55.2 (2025-04-15)
 
 - fix: force inline tab anchor slugify (#1227) ([`b40980a`](https://github.com/unfoldadmin/django-unfold/commit/b40980afe6d848b11c725fc111e322f8c6da4e3f))
