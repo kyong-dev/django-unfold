@@ -69,8 +69,8 @@
                 </tr>
             </thead>
 
-            {% for result in results %}
-                <tbody class="block lg:table-row-group" x-data="{rowOpen: false}">
+            <tbody class="block lg:table-row-group" x-data="{rowOpen: false}">
+                {% for result in results %}
                     {% if result.form and result.form.non_field_errors %}
                         <tr>
                             <td class="text-left" colspan="{{ result|length }}">
@@ -111,8 +111,8 @@
                             </td>
                         </tr>
                     {% endif %}
-                </tbody>
-            {% endfor %}
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 {% else %}
