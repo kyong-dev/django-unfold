@@ -123,9 +123,10 @@ TEXTAREA_EXPANDABLE_CLASSES = [
 
 SELECT_CLASSES = [
     *BASE_INPUT_CLASSES,
-    "pr-8",
+    "pr-8!",
     "max-w-2xl",
     "appearance-none",
+    "truncate",
 ]
 
 PROSE_CLASSES = [
@@ -168,7 +169,7 @@ CHECKBOX_CLASSES = [
     "dark:border-base-500",
     "dark:checked:after:text-white",
     "focus:outline",
-    "focus:outline-1",
+    "focus:outline-2",
     "focus:outline-offset-2",
     "focus:outline-primary-500",
     "after:absolute",
@@ -210,7 +211,7 @@ RADIO_CLASSES = [
     "dark:border-base-500",
     "hover:border-base-400",
     "focus:outline",
-    "focus:outline-1",
+    "focus:outline-2",
     "focus:outline-offset-2",
     "focus:outline-primary-500",
     "after:absolute",
