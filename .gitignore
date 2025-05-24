@@ -10,3 +10,4 @@ dist/
 .env
 tests/
 pyproject-patrick.toml
+.prettierignore

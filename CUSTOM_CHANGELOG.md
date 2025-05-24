@@ -25,3 +25,4 @@
 ## 0.58.1 (2025-05-25)
 
 - Support adminsortable2 with django admin log
+- Support group badge callback 
