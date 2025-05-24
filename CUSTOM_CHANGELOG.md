@@ -21,3 +21,7 @@
 ## 0.53.0 (2025-03-28)
 
 - Table component HTML tags available
+
+## 0.58.1 (2025-05-25)
+
+- Support adminsortable2 with django admin log
