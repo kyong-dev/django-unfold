@@ -197,7 +197,7 @@ table tr.selected th {
 }
 
 .timezonewarning {
-  @apply absolute block items-center right-20 top-2.5 text-base-500 truncate;
+  @apply absolute block items-center right-11 top-2 text-base-500 truncate;
   font-size: 0;
 }
 
@@ -218,7 +218,7 @@ table tr.selected th {
  Selector
  *******************************************************/
 .selector {
-  @apply flex flex-col grow items-center md:flex-row;
+  @apply flex flex-col grow items-center max-w-5xl md:flex-row;
 }
 
 .selector .selector-available-title label,
@@ -319,7 +319,7 @@ table tr.selected th {
 }
 
 [data-inline-type="stacked"] .add-row {
-  @apply border-t border-base-200 overflow-hidden dark:border-base-800;
+  @apply overflow-hidden;
 }
 
 .add-row td {
