@@ -1,9 +1,5 @@
 from functools import update_wrapper
-<<<<<<< HEAD
 from typing import Optional, Tuple, Union, List
-=======
-from typing import Any, Optional
->>>>>>> a0e5da4121527c118dd6e0e363a932d40208d7c0
 
 from django import forms
 from django.contrib.admin import ModelAdmin as BaseModelAdmin
