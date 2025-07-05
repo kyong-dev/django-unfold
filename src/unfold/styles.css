@@ -35,6 +35,8 @@
 
 @theme {
   --font-sans: 'Inter', sans-serif;
+  --shadow-raised: 0 2px 12px rgb(var(--color-base-300));
+  --shadow-raised-dark: 0 2px 12px rgb(var(--color-base-700));
 }
 
 @theme inline{
@@ -338,10 +340,6 @@ td .inline-deletelink {
   @apply block lg:mt-2.5;
 }
 
-h3 span:nth-child(3) {
-  @apply ml-auto;
-}
-
 /*******************************************************
  Autocomplete
  *******************************************************/
@@ -380,7 +378,7 @@ h3 span:nth-child(3) {
 
 .select2-container.select2-container--admin-autocomplete .select2-selection--multiple .select2-selection__clear:after,
 .select2-container.select2-container--admin-autocomplete .select2-selection--single .select2-selection__clear:after {
-  @apply material-symbols-outlined transition-all content-['close'] text-[18px] ;
+  @apply material-symbols-outlined transition-all content-['close\_small'] text-[18px] ;
 }
 
 .select2-container.select2-container--admin-autocomplete .select2-selection--single .select2-selection__arrow {
@@ -448,9 +446,8 @@ h3 span:nth-child(3) {
 }
 
 .select2-container--admin-autocomplete .select2-selection--multiple li.select2-selection__choice .select2-selection__choice__remove:after {
-  @apply h-7 leading-7! material-symbols-outlined;
+  @apply content-['close\_small'] h-7 leading-7! material-symbols-outlined;
 
-  content: "close";
   font-size: 14px;
 }
 
@@ -483,7 +480,7 @@ fieldset details > summary {
 }
 
 fieldset details > summary:after {
-  @apply material-symbols-outlined absolute right-3 top-3.5;
+  @apply material-symbols-outlined absolute cursor-pointer right-3 top-3.5;
   content: "expand_more";
 }
 
