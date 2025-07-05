@@ -26,3 +26,7 @@
 
 - Support adminsortable2 with django admin log
 - Support group badge callback 
+
+## 0.62.0 (2025-07-06)
+
+- Change form submit button loading feature
