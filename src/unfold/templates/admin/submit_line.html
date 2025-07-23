@@ -5,8 +5,44 @@
         <div class="flex flex-col-reverse gap-3 items-center mx-auto lg:flex-row-reverse container lg:h-[64px]">
             {% block submit-row %}
                 {% if show_save %}
-                    <button type="submit" form="{{ opts.model_name }}_form" name="_save" class="bg-primary-600 block border border-transparent cursor-pointer font-medium px-3 py-2 rounded-default text-white w-full lg:w-auto">
-                        {% translate 'Save' %}
+                    <button
+                        type="submit"
+                        x-data="{ loading: false }"
+                        @click.prevent="loading = true; $nextTick(() => $el.form.submit())"
+                        :disabled="loading"
+                        class="bg-primary-600 block border border-transparent cursor-pointer font-medium px-3 py-2 rounded-default text-white w-full lg:w-auto flex items-center justify-center"
+                        form="{{ opts.model_name }}_form"
+                        name="_save"
+                    >
+                        <span x-show="loading" class="flex items-center">
+                            <style>
+                                @keyframes spin {
+                                    to { transform: rotate(360deg); }
+                                }
+                            </style>
+                            <svg
+                                style="animation: spin 1s linear infinite;"
+                                class="h-4 w-4 mr-2"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                    opacity="0.2"
+                                />
+                                <path
+                                    d="M12 2a10 10 0 0 1 10 10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                    stroke-linecap="round"
+                                />
+                            </svg>
+                        </span>
+                        <span x-show="!loading">{% translate 'Save' %}</span>
                     </button>
                 {% endif %}
 

@@ -19,8 +19,46 @@
             {% endblock %}
 
             {% block actions-submit %}
-                <button type="submit" x-show="action" class="bg-primary-900 cursor-pointer flex font-medium items-center justify-center px-3 py-2 rounded-default text-sm text-white whitespace-nowrap" title="{% translate "Run the selected action" %}" name="index" value="{{ action_index|default:0 }}">
-                    {% trans "Run" %}
+                <button
+                    type="submit"
+                    x-show="action"
+                    x-data="{ loading: false }"
+                    @click.prevent="loading = true; $nextTick(() => $el.form.submit())"
+                    :disabled="loading"
+                    class="bg-primary-900 cursor-pointer flex font-medium items-center justify-center px-3 py-2 rounded-default text-sm text-white whitespace-nowrap"
+                    title="{% translate 'Run the selected action' %}"
+                    name="index"
+                    value="{{ action_index|default:0 }}"
+                >
+                    <span x-show="loading" class="flex items-center">
+                        <style>
+                            @keyframes spin {
+                                to { transform: rotate(360deg); }
+                            }
+                        </style>
+                        <svg
+                            style="animation: spin 1s linear infinite;"
+                            class="h-4 w-4 mr-2"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                        >
+                            <circle
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                                opacity="0.2"
+                            />
+                            <path
+                                d="M12 2a10 10 0 0 1 10 10"
+                                stroke="currentColor"
+                                stroke-width="4"
+                                stroke-linecap="round"
+                            />
+                        </svg>
+                    </span>
+                    <span x-show="!loading">{% trans "Run" %}</span>
                 </button>
             {% endblock %}
         </div>

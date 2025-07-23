@@ -76,3 +76,10 @@ def changelist_view(self, request, extra_context=None):
     """
     return super().changelist_view(request, extra_context=extra_context)
 ```
+
+## 0.63.0.1 (2025-07-24)
+
+- Button Spinner
+    modified:   src/unfold/templates/admin/actions.html
+    modified:   src/unfold/templates/admin/pagination.html
+    modified:   src/unfold/templates/admin/submit_line.html
