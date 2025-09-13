@@ -19,12 +19,14 @@ UNFOLD = {
     # ...
     "COMMAND": {
         "search_models": True,  # Default: False
-        "search_callback": "utils.search_callback"
+        "search_callback": "utils.search_callback",
         "show_history": True,  # Enable history
     },
     # ...
 }
 ```
+
+Command results use infinite scrolling with a default page size of 100 results. When the last item becomes visible in the viewport, a new page of results is automatically loaded and appended to the existing list, allowing continuous browsing through search results.
 
 ## Custom search callback
 
