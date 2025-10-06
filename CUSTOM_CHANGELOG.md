@@ -83,3 +83,9 @@ def changelist_view(self, request, extra_context=None):
     modified:   src/unfold/templates/admin/actions.html
     modified:   src/unfold/templates/admin/pagination.html
     modified:   src/unfold/templates/admin/submit_line.html
+
+
+## 0.67.0.1 (2025-10-06)
+
+- Table div error fixed
+    modified: src/unfold/templates/unfold/components/table.html
