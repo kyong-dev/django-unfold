@@ -21,7 +21,11 @@ from django.utils.translation import gettext_lazy as _
 from unfold.components import ComponentRegistry
 from unfold.dataclasses import UnfoldAction
 from unfold.enums import ActionVariant
-from unfold.widgets import UnfoldAdminMoneyWidget, UnfoldAdminSplitDateTimeWidget
+from unfold.widgets import (
+    UnfoldAdminMoneyWidget,
+    UnfoldAdminSelect2Widget,
+    UnfoldAdminSplitDateTimeWidget,
+)
 
 register = Library()
 
@@ -69,7 +73,9 @@ def tab_list(context: RequestContext, page: str, opts: Options | None = None) ->
     data = {
         "nav_global": context.get("nav_global"),
         "actions_detail": context.get("actions_detail"),
+        "actions_detail_hide_default": context.get("actions_detail_hide_default"),
         "actions_list": context.get("actions_list"),
+        "actions_list_hide_default": context.get("actions_list_hide_default"),
         "actions_items": context.get("actions_items"),
         "is_popup": context.get("is_popup"),
         "tabs_list": _get_tabs_list(context, page, opts),
@@ -499,6 +505,11 @@ def changeform_condition(field: BoundField) -> BoundField:
     if isinstance(field.field.field.widget, RelatedFieldWidgetWrapper):
         field.field.field.widget.widget.attrs["x-model.fill"] = field.field.name
         field.field.field.widget.widget.attrs["x-init"] = mark_safe(
+            f"const $ = django.jQuery; $(function () {{ const select = $('#{field.field.auto_id}'); select.on('change', (ev) => {{ {field.field.name} = select.val(); }}); }});"
+        )
+    elif isinstance(field.field.field.widget, UnfoldAdminSelect2Widget):
+        field.field.field.widget.attrs["x-model.fill"] = field.field.name
+        field.field.field.widget.attrs["x-init"] = mark_safe(
             f"const $ = django.jQuery; $(function () {{ const select = $('#{field.field.auto_id}'); select.on('change', (ev) => {{ {field.field.name} = select.val(); }}); }});"
         )
     elif isinstance(
