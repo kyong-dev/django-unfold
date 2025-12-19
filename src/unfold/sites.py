@@ -2,7 +2,6 @@ import copy
 import hashlib
 import time
 from collections.abc import Callable
-from http import HTTPStatus
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -64,11 +63,6 @@ class UnfoldAdminSite(AdminSite):
         urlpatterns = (
             [
                 path("search/", self.admin_view(self.search), name="search"),
-                path(
-                    "toggle-sidebar/",
-                    self.admin_view(self.toggle_sidebar),
-                    name="toggle_sidebar",
-                ),
             ]
             + extra_urls
             + super().get_urls()
@@ -104,6 +98,7 @@ class UnfoldAdminSite(AdminSite):
             "show_history": self._get_config("SHOW_HISTORY", request),
             "show_view_on_site": self._get_config("SHOW_VIEW_ON_SITE", request),
             "show_languages": self._get_config("SHOW_LANGUAGES", request),
+            "language_flags": self._get_config("LANGUAGE_FLAGS", request),
             "show_back_button": self._get_config("SHOW_BACK_BUTTON", request),
             "theme": self._get_config("THEME", request),
             "border_radius": self._get_config("BORDER_RADIUS", request),
@@ -170,16 +165,6 @@ class UnfoldAdminSite(AdminSite):
         return TemplateResponse(
             request, self.index_template or "admin/index.html", context
         )
-
-    def toggle_sidebar(
-        self, request: HttpRequest, extra_context: dict[str, Any] | None = None
-    ) -> HttpResponse:
-        if "toggle_sidebar" not in request.session:
-            request.session["toggle_sidebar"] = True
-        else:
-            request.session["toggle_sidebar"] = not request.session["toggle_sidebar"]
-
-        return HttpResponse(status=HTTPStatus.OK)
 
     def _search_apps(
         self, app_list: list[dict[str, Any]], search_term: str
@@ -376,14 +361,13 @@ class UnfoldAdminSite(AdminSite):
         for group in copy.deepcopy(navigation):
             group["items"] = self._get_navigation_items(request, group["items"], tabs)
 
-            # Group Badge callbacks
+            # Badge callbacks
             if "badge" in group and isinstance(group["badge"], str):
                 try:
                     callback = import_string(group["badge"])
                     group["badge_callback"] = lazy(callback)(request)
                 except ImportError:
                     pass
-                
             results.append(group)
 
         return results
