@@ -2,15 +2,55 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
+from django.core.validators import EMPTY_VALUES
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 
+from example.models import (
+    ActionUser,
+    ApprovalChoices,
+    Category,
+    ColorChoices,
+    FilterUser,
+    Label,
+    PriorityChoices,
+    Project,
+    SectionUser,
+    StatusChoices,
+    Tag,
+    Task,
+    User,
+)
 from unfold.admin import ModelAdmin, StackedInline
+from unfold.contrib.filters.admin import (
+    AllValuesCheckboxFilter,
+    AutocompleteSelectFilter,
+    AutocompleteSelectMultipleFilter,
+    BooleanRadioFilter,
+    CheckboxFilter,
+    ChoicesCheckboxFilter,
+    ChoicesDropdownFilter,
+    ChoicesRadioFilter,
+    DropdownFilter,
+    FieldTextFilter,
+    MultipleChoicesDropdownFilter,
+    MultipleDropdownFilter,
+    MultipleRelatedDropdownFilter,
+    RadioFilter,
+    RangeDateFilter,
+    RangeDateTimeFilter,
+    RangeNumericFilter,
+    RangeNumericListFilter,
+    RelatedCheckboxFilter,
+    RelatedDropdownFilter,
+    SingleNumericFilter,
+    SliderNumericFilter,
+    TextFilter,
+)
 from unfold.decorators import action
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 from unfold.sections import TableSection, TemplateSection
-
-from .models import ActionUser, SectionUser, Tag, User
 
 admin.site.unregister(Group)
 
@@ -49,6 +89,149 @@ class SectionUserAdmin(UserAdmin):
     list_sections = [
         SomeTemplateSection,
         RelatedTableSection,
+    ]
+
+
+class CustomTextFilter(TextFilter):
+    title = _("Text filter")
+    parameter_name = "text_username"
+
+    def queryset(self, request, queryset):
+        if self.value() not in EMPTY_VALUES:
+            return queryset.filter(username__icontains=self.value())
+
+        return queryset
+
+
+class CustomRangeNumericListFilter(RangeNumericListFilter):
+    parameter_name = "numeric_range_custom"
+    title = "Numeric Range Custom"
+
+
+class CustomSliderNumericFilter(SliderNumericFilter):
+    MAX_DECIMALS = 2
+    STEP = 1
+
+
+class CustomStatusRadioFilter(RadioFilter):
+    title = _("Custom radio filter")
+    parameter_name = "custom_radio_filter"
+
+    def lookups(self, request, model_admin):
+        return StatusChoices.choices
+
+    def queryset(self, request, queryset):
+        if self.value() not in EMPTY_VALUES:
+            return queryset.filter(status=self.value())
+
+        return queryset
+
+
+class CustomApprovalCheckboxFilter(CheckboxFilter):
+    title = _("Custom checkbox filter")
+    parameter_name = "custom_checkbox_filter"
+
+    def lookups(self, request, model_admin):
+        return ApprovalChoices.choices
+
+    def queryset(self, request, queryset):
+        if self.value() not in EMPTY_VALUES:
+            return queryset.filter(approval__in=self.value())
+
+        return queryset
+
+
+class CustomPriorityDropdownFilter(DropdownFilter):
+    title = _("Custom priority dropdown filter")
+    parameter_name = "custom_priority"
+
+    def lookups(self, request, model_admin):
+        return PriorityChoices.choices
+
+    def queryset(self, request, queryset):
+        if self.value() not in EMPTY_VALUES:
+            return queryset.filter(priority=self.value())
+
+        return queryset
+
+
+class CustomColorMultipleDropdownFilter(MultipleDropdownFilter):
+    title = _("Custom color multiple dropdown filter")
+    parameter_name = "custom_color"
+
+    def lookups(self, request, model_admin):
+        return ColorChoices.choices
+
+    def queryset(self, request, queryset):
+        if self.value() not in EMPTY_VALUES:
+            return queryset.filter(color__in=self.value())
+
+        return queryset
+
+
+@admin.register(FilterUser)
+class FilterUserAdmin(UserAdmin):
+    list_fullwidth = True
+    list_display = [
+        "username",
+        "email",
+        "is_active",
+        "is_staff",
+        "is_active",
+        "status",
+        "approval",
+        "date_joined",
+        "last_login",
+    ]
+    list_filter = [
+        CustomTextFilter,
+        ("username", FieldTextFilter),
+        # Autocomplete filters
+        ("projects", AutocompleteSelectFilter),
+        ("tasks", AutocompleteSelectMultipleFilter),
+        # Dropdown filters
+        ("priority", ChoicesDropdownFilter),
+        ("color", MultipleChoicesDropdownFilter),
+        ("categories", RelatedDropdownFilter),
+        ("labels", MultipleRelatedDropdownFilter),
+        CustomPriorityDropdownFilter,
+        CustomColorMultipleDropdownFilter,
+        # Date/time filters
+        ("date_joined", RangeDateFilter),
+        ("last_login", RangeDateTimeFilter),
+        # Choice filters
+        ("status", ChoicesRadioFilter),
+        ("approval", ChoicesCheckboxFilter),
+        ("is_active", BooleanRadioFilter),
+        ("tags", RelatedCheckboxFilter),
+        ("username", AllValuesCheckboxFilter),
+        CustomStatusRadioFilter,
+        CustomApprovalCheckboxFilter,
+        # Numeric filters
+        ("numeric_single", SingleNumericFilter),
+        ("numeric_slider", SliderNumericFilter),
+        ("numeric_slider_custom", CustomSliderNumericFilter),
+        ("numeric_range", RangeNumericFilter),
+        CustomRangeNumericListFilter,
+    ]
+    list_filter_submit = True
+    list_filter_sheet = False
+    fieldsets = [
+        (
+            None,
+            {
+                "fields": (
+                    "username",
+                    "status",
+                    "approval",
+                    "numeric_single",
+                    "numeric_slider",
+                    "numeric_slider_custom",
+                    "numeric_range",
+                    "numeric_range_custom",
+                ),
+            },
+        ),
     ]
 
 
@@ -459,4 +642,24 @@ class GroupAdmin(BaseGroupAdmin, ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(ModelAdmin):
+    search_fields = ["name"]
+
+
+@admin.register(Category)
+class CategoryAdmin(ModelAdmin):
+    search_fields = ["name"]
+
+
+@admin.register(Label)
+class LabelAdmin(ModelAdmin):
+    search_fields = ["name"]
+
+
+@admin.register(Project)
+class ProjectAdmin(ModelAdmin):
+    search_fields = ["name"]
+
+
+@admin.register(Task)
+class TaskAdmin(ModelAdmin):
     search_fields = ["name"]
