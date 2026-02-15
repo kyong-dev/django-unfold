@@ -71,6 +71,7 @@ class ModelAdmin(
     change_form_outer_after_template = None
     change_form_datasets = ()
     compressed_fields = False
+    show_add_link = True
     readonly_preprocess_fields = {}
     warn_unsaved_form = False
     checks_class = UnfoldModelAdminChecks
@@ -106,11 +107,14 @@ class ModelAdmin(
 
         return super().changelist_view(request, extra_context)
 
-    def get_list_display(self, request: HttpRequest) -> list[str]:
+    def get_list_display(self, request: HttpRequest) -> list | tuple:
         list_display = super().get_list_display(request)
 
         if self.ordering_field and self.ordering_field not in list_display:
-            list_display.append(self.ordering_field)
+            if isinstance(list_display, tuple):
+                list_display = (*list_display, self.ordering_field)
+            elif isinstance(list_display, list):
+                list_display.append(self.ordering_field)
 
         return list_display
 

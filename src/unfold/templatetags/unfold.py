@@ -3,24 +3,33 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from django import template
-from django.contrib.admin.helpers import AdminForm, Fieldset
+from django.contrib.admin.helpers import (
+    AdminField,
+    AdminForm,
+    AdminReadonlyField,
+    Fieldset,
+    InlineAdminFormSet,
+)
 from django.contrib.admin.views.main import PAGE_VAR, ChangeList
 from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
+from django.contrib.auth.models import AbstractUser
 from django.core.paginator import Paginator
 from django.db.models import Model
 from django.db.models.options import Options
-from django.forms import BoundField, CheckboxSelectMultiple, Field
+from django.forms import BoundField, CheckboxSelectMultiple
 from django.http import HttpRequest, QueryDict
 from django.template import Context, Library, Node, RequestContext, TemplateSyntaxError
 from django.template.base import NodeList, Parser, Token, token_kwargs
+from django.template.defaultfilters import slugify
 from django.template.loader import render_to_string
 from django.urls import reverse_lazy
-from django.utils.safestring import SafeText, mark_safe
+from django.utils.module_loading import import_string
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from unfold.components import ComponentRegistry
-from unfold.dataclasses import UnfoldAction
 from unfold.enums import ActionVariant
+from unfold.sections import BaseSection
 from unfold.widgets import (
     UnfoldAdminMoneyWidget,
     UnfoldAdminSelect2Widget,
@@ -28,6 +37,32 @@ from unfold.widgets import (
 )
 
 register = Library()
+
+
+def _count_errors_in_general(
+    admin_form: AdminForm, inlines: list[InlineAdminFormSet]
+) -> int:
+    count = 0
+    count += len(admin_form.errors)
+    count += len(admin_form.non_field_errors())
+
+    for inline in inlines:
+        if not getattr(inline.opts, "tab", False) and inline.formset.errors:
+            for error in inline.formset.errors:
+                if isinstance(error, dict) and len(error) > 0:
+                    count += 1
+
+    return count
+
+
+def _count_errors_in_inline(inline: InlineAdminFormSet) -> int:
+    count = 0
+
+    for error in inline.formset.errors:
+        if isinstance(error, dict) and len(error) > 0:
+            count += 1
+
+    return count
 
 
 def _get_tabs_list(
@@ -39,7 +74,7 @@ def _get_tabs_list(
     if page not in ["changeform", "changelist"]:
         page_id = page
 
-    for tab in context.get("tab_list", []):
+    for tab in context.get("tab_list") or []:
         if page_id:
             if tab.get("page") == page_id:
                 tabs_list = tab["items"]
@@ -89,22 +124,30 @@ def tab_list(context: RequestContext, page: str, opts: Options | None = None) ->
     inlines_list = []
     datasets_list = []
     data = {
-        "actions_items": context.get("actions_items"),
         "is_popup": context.get("is_popup"),
         "tabs_list": _get_tabs_list(context, page, opts),
     }
 
+    if context.get("adminform") and context.get("inline_admin_formsets"):
+        data["error_count"] = _count_errors_in_general(
+            context["adminform"],
+            context["inline_admin_formsets"],
+        )
+
+        for inline in context.get("inline_admin_formsets") or []:
+            inline.error_count = _count_errors_in_inline(inline)
+
     # If the changeform is rendered and there are no custom tab navigation
     # specified, check for inlines to put into tabs
-    if page == "changeform" and len(data["tabs_list"]) == 0:
-        for inline in context.get("inline_admin_formsets", []):
+    if page == "changeform" and len(data.get("tabs_list") or []) == 0:
+        for inline in context.get("inline_admin_formsets") or []:
             if opts and getattr(inline.opts, "tab", False):
                 inlines_list.append(inline)
 
         if len(inlines_list) > 0:
             data["inlines_list"] = inlines_list
 
-        for dataset in context.get("datasets", []):
+        for dataset in context.get("datasets") or []:
             if dataset and getattr(dataset, "tab", False):
                 datasets_list.append(dataset)
 
@@ -119,12 +162,26 @@ def tab_list(context: RequestContext, page: str, opts: Options | None = None) ->
 
 
 @register.simple_tag(name="render_section", takes_context=True)
-def render_section(context: Context, section_class, instance: Model) -> str:
-    return section_class(context.request, instance).render()
+def render_section(
+    context: RequestContext, section_class: type[BaseSection] | str, instance: Model
+) -> str:
+    if isinstance(section_class, str):
+        section_class: type[BaseSection] = import_string(section_class)
+
+    return section_class(context.get("request"), instance).render()
 
 
 @register.simple_tag(name="has_nav_item_active")
 def has_nav_item_active(items: list) -> bool:
+    for item in items:
+        if "active" in item and item["active"]:
+            return True
+
+    return False
+
+
+@register.filter
+def has_active_item(items: list[dict]) -> bool:
     for item in items:
         if "active" in item and item["active"]:
             return True
@@ -138,17 +195,8 @@ def class_name(value: Any) -> str:
 
 
 @register.filter
-def is_list(value: Any) -> str:
+def is_list(value: Any) -> bool:
     return isinstance(value, list)
-
-
-@register.filter
-def has_active_item(items: list[dict]) -> bool:
-    for item in items:
-        if "active" in item and item["active"]:
-            return True
-
-    return False
 
 
 @register.filter
@@ -164,7 +212,7 @@ def tabs(adminform: AdminForm) -> list[Fieldset]:
     result = []
 
     for fieldset in adminform:
-        if "tab" in fieldset.classes and fieldset.name:
+        if "tab" in fieldset.classes and hasattr(fieldset, "name") and fieldset.name:
             result.append(fieldset)
 
     return result
@@ -186,19 +234,19 @@ class RenderComponentNode(template.Node):
         self.include_context = include_context
         super().__init__(*args, **kwargs)
 
-    def render(self, context: RequestContext) -> str:
+    def render(self, context: Context) -> str:
         values = {
             name: var.resolve(context) for name, var in self.extra_context.items()
         }
+        request = context.request if isinstance(context, RequestContext) else None
 
         if "component_class" in values:
             values = ComponentRegistry.create_instance(
-                values["component_class"],
-                request=context.request if hasattr(context, "request") else None,
+                values["component_class"], request=request
             ).get_context_data(**values)
 
         context_copy = context.new()
-        context_copy.update(context.flatten())
+        context_copy.update(context.flatten())  # ty:ignore[invalid-argument-type]
         context_copy.update(values)
         children = self.nodelist.render(context_copy)
 
@@ -212,18 +260,14 @@ class RenderComponentNode(template.Node):
         if self.include_context:
             values.update(context.flatten())
 
-        return render_to_string(
-            self.template_name,
-            request=context.request if hasattr(context, "request") else None,
-            context=values,
-        )
+        return render_to_string(self.template_name, request=request, context=values)
 
 
 @register.tag("component")
-def do_component(parser: Parser, token: Token) -> str:
+def do_component(parser: Parser, token: Token) -> RenderComponentNode:
     bits = token.split_contents()
 
-    if len(bits) < 2:
+    if len(bits) < 2:  # noqa: PLR2004
         raise TemplateSyntaxError(
             f"{bits[0]} tag takes at least one argument: the name of the template to be included."
         )
@@ -264,7 +308,7 @@ def do_component(parser: Parser, token: Token) -> str:
 
 
 @register.filter
-def add_css_class(field: Field, classes: list | tuple) -> Field:
+def add_css_class(field: BoundField, classes: list | tuple) -> BoundField:
     if type(classes) in (list, tuple):
         classes = " ".join(classes)
 
@@ -281,7 +325,7 @@ def add_css_class(field: Field, classes: list | tuple) -> Field:
     takes_context=True,
     name="preserve_filters",
 )
-def preserve_changelist_filters(context: Context) -> dict[str, dict[str, str]]:
+def preserve_changelist_filters(context: RequestContext) -> dict[str, dict[str, str]]:
     """
     Generate hidden input fields to preserve filters for POST forms.
     """
@@ -302,8 +346,10 @@ def preserve_changelist_filters(context: Context) -> dict[str, dict[str, str]]:
 
 
 @register.simple_tag(takes_context=True)
-def element_classes(context: Context, key: str) -> str:
-    if key in context.get("element_classes", {}):
+def element_classes(context: RequestContext, key: str) -> str:
+    element_classes = context.get("element_classes") or {}
+
+    if key in element_classes:
         if isinstance(context["element_classes"][key], list | tuple):
             return " ".join(context["element_classes"][key])
 
@@ -313,8 +359,9 @@ def element_classes(context: Context, key: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def fieldset_rows_classes(context: Context) -> str:
+def fieldset_rows_classes(context: RequestContext) -> str:
     classes = [
+        "form-rows",
         "aligned",
     ]
 
@@ -333,7 +380,7 @@ def fieldset_rows_classes(context: Context) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def fieldset_row_classes(context: Context) -> str:
+def fieldset_row_classes(context: RequestContext) -> str:
     classes = [
         "form-row",
         "field-row",
@@ -341,7 +388,7 @@ def fieldset_row_classes(context: Context) -> str:
     ]
 
     formset = context.get("inline_admin_formset", None)
-    line = context.get("line")
+    line = context.get("line") or []
 
     # Hide the field in case of ordering field for sorting
     for field in line:
@@ -368,7 +415,7 @@ def fieldset_row_classes(context: Context) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def fieldset_line_classes(context: Context) -> str:
+def fieldset_line_classes(context: RequestContext) -> str:
     classes = [
         "field-line",
         "flex",
@@ -410,10 +457,11 @@ def fieldset_line_classes(context: Context) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def action_item_classes(context: Context, action: UnfoldAction) -> str:
+def action_item_classes(context: RequestContext, action: dict) -> str:
     classes = [
         "border",
         "border-base-200",
+        "select-none",
         "max-lg:-mt-px",
         "max-lg:first:rounded-t-default",
         "max-lg:last:rounded-b-default",
@@ -422,65 +470,57 @@ def action_item_classes(context: Context, action: UnfoldAction) -> str:
         "min-lg:last:rounded-r-default",
     ]
 
+    variant_classes = {
+        ActionVariant.PRIMARY: [
+            "border-primary-700",
+            "bg-primary-600",
+            "text-white",
+            "dark:border-primary-500",
+        ],
+        ActionVariant.DANGER: [
+            "border-red-700",
+            "bg-red-600",
+            "text-white",
+            "dark:border-red-500",
+        ],
+        ActionVariant.SUCCESS: [
+            "border-green-700",
+            "bg-green-600",
+            "text-white",
+            "dark:border-green-500",
+        ],
+        ActionVariant.INFO: [
+            "border-blue-700",
+            "bg-blue-600",
+            "text-white",
+            "dark:border-blue-500",
+        ],
+        ActionVariant.WARNING: [
+            "border-orange-700",
+            "bg-orange-600",
+            "text-white",
+            "dark:border-orange-500",
+        ],
+        ActionVariant.DEFAULT: [
+            "border-base-200",
+            "hover:text-primary-600",
+            "dark:hover:text-primary-500",
+            "dark:border-base-700",
+        ],
+    }
+
     if "variant" not in action:
         variant = ActionVariant.DEFAULT
     else:
         variant = action["variant"]
 
-    if variant == ActionVariant.PRIMARY:
-        classes.extend(
-            [
-                "border-primary-700",
-                "bg-primary-600",
-                "text-white",
-                "dark:border-primary-500",
-            ]
-        )
-    elif variant == ActionVariant.DANGER:
-        classes.extend(
-            [
-                "border-red-700",
-                "bg-red-600",
-                "text-white",
-                "dark:border-red-500",
-            ]
-        )
-    elif variant == ActionVariant.SUCCESS:
-        classes.extend(
-            [
-                "border-green-700",
-                "bg-green-600",
-                "text-white",
-                "dark:border-green-500",
-            ]
-        )
-    elif variant == ActionVariant.INFO:
-        classes.extend(
-            [
-                "border-blue-700",
-                "bg-blue-600",
-                "text-white",
-                "dark:border-blue-500",
-            ]
-        )
-    elif variant == ActionVariant.WARNING:
-        classes.extend(
-            [
-                "border-orange-700",
-                "bg-orange-600",
-                "text-white",
-                "dark:border-orange-500",
-            ]
-        )
-    else:
-        classes.extend(
-            [
-                "border-base-200",
-                "hover:text-primary-600",
-                "dark:hover:text-primary-500",
-                "dark:border-base-700",
-            ]
-        )
+        if isinstance(variant, str):
+            try:
+                variant = ActionVariant(variant)
+            except ValueError:
+                variant = ActionVariant.DEFAULT
+
+    classes.extend(variant_classes[variant])
 
     return " ".join(set(classes))
 
@@ -511,7 +551,9 @@ def changeform_data(adminform: AdminForm) -> str:
 
 
 @register.filter
-def changeform_condition(field: BoundField) -> BoundField:
+def changeform_condition(
+    field: AdminField | AdminReadonlyField,
+) -> AdminField | AdminReadonlyField:
     if isinstance(field.field, dict):
         return field
 
@@ -546,11 +588,9 @@ def infinite_paginator_url(cl, i):
 
 
 @register.simple_tag
-def elided_page_range(paginator: Paginator, number: int) -> list[int | str] | None:
-    if not paginator or not number:
-        return None
-
-    return paginator.get_elided_page_range(number=number)
+def elided_page_range(paginator: Paginator, number: int) -> Iterable[int | str] | None:
+    if paginator and number:
+        return paginator.get_elided_page_range(number=number)
 
 
 @register.simple_tag(takes_context=True)
@@ -576,7 +616,8 @@ def querystring_params(
 def unfold_querystring(context, *args, **kwargs):
     """
     Duplicated querystring template tag from Django core to allow
-    it using in Django 4.x. Once 4.x is not supported, remove it.
+    it using in Django 4.x.
+    TODO: Once 4.x is not supported, remove it.
     """
     if not args:
         args = [context.request.GET]
@@ -606,7 +647,7 @@ def unfold_querystring(context, *args, **kwargs):
 @register.simple_tag(takes_context=True)
 def header_title(context: RequestContext) -> str:
     parts = []
-    opts = context.get("opts")
+    opts: Options | None = context.get("opts")
     current_app = (
         context.request.current_app
         if hasattr(context.request, "current_app")
@@ -702,7 +743,7 @@ def header_title(context: RequestContext) -> str:
                 "link": reverse_lazy(
                     f"{current_app}:app_list", args=[model_admin.model._meta.app_label]
                 ),
-                "title": model_admin.model._meta.app_label,
+                "title": model_admin.model._meta.app_config.verbose_name,
             }
         )
 
@@ -723,9 +764,15 @@ def header_title(context: RequestContext) -> str:
         )
 
     if len(parts) == 0:
-        username = (
-            context.request.user.get_short_name() or context.request.user.get_username()
-        )
+        user = context.request.user
+        username = user.get_username()
+
+        if hasattr(user, "get_short_name") and callable(user.get_short_name):
+            username = user.get_username()
+
+            if isinstance(user, AbstractUser):
+                username = user.get_short_name() or user.get_username()
+
         parts.append({"title": f"{_('Welcome')} {username}"})
 
     return render_to_string(
@@ -748,20 +795,13 @@ def admin_object_app_url(context: RequestContext, object: Model, arg: str) -> st
     return f"{current_app}:{object._meta.app_label}_{object._meta.model_name}_{arg}"
 
 
-@register.filter
-def has_nested_tables(table: dict) -> bool:
-    return any(
-        isinstance(row, dict) and "table" in row for row in table.get("rows", [])
-    )
-
-
 class RenderCaptureNode(Node):
     def __init__(self, nodelist: NodeList, variable_name: str, silent: bool) -> None:
         self.nodelist = nodelist
         self.variable_name = variable_name
         self.silent = silent
 
-    def render(self, context: dict[str, Any]) -> str | SafeText:
+    def render(self, context: Context) -> str:
         content = self.nodelist.render(context)
 
         if not self.silent:
@@ -782,16 +822,16 @@ def do_capture(parser: Parser, token: Token) -> RenderCaptureNode:
     variable_name = ""
     silent = False
 
-    if len(parts) > 4:
+    if len(parts) > 4:  # noqa: PLR2004
         raise TemplateSyntaxError("Too many arguments for 'capture' tag.")
 
-    if len(parts) >= 3:
+    if len(parts) >= 3:  # noqa: PLR2004
         if parts[1] != "as":
             raise TemplateSyntaxError("'as' is required for 'capture' tag.")
 
         variable_name = parts[2]
 
-    if len(parts) == 4:
+    if len(parts) == 4:  # noqa: PLR2004
         if parts[3] != "silent":
             raise TemplateSyntaxError("'silent' is required for 'capture' tag.")
 
@@ -800,3 +840,48 @@ def do_capture(parser: Parser, token: Token) -> RenderCaptureNode:
     nodelist = parser.parse(("endcapture",))
     parser.delete_first_token()
     return RenderCaptureNode(nodelist, variable_name, silent)
+
+
+@register.filter
+def tabs_active(fieldsets: list[Fieldset]) -> str:
+    active = ""
+
+    if len(fieldsets) > 0 and hasattr(fieldsets[0], "name"):
+        active = slugify(str(fieldsets[0].name))
+
+    for fieldset in fieldsets:
+        for field_line in fieldset:
+            for field in field_line:
+                if (
+                    not field.is_readonly
+                    and field.errors()
+                    and hasattr(fieldset, "name")
+                ):
+                    active = slugify(str(fieldset.name))
+
+    return active
+
+
+@register.filter
+def tabs_errors_count(fieldset: Fieldset) -> int:
+    count = 0
+
+    for field_line in fieldset:
+        for field in field_line:
+            if not field.is_readonly and field.errors():
+                count += 1
+
+    return count
+
+
+@register.simple_tag
+def tabs_primary_active(inlines: list[InlineAdminFormSet]) -> str:
+    active = "general"
+
+    for inline in inlines:
+        if getattr(inline.opts, "tab", False) and inline.formset.errors:
+            for error in inline.formset.errors:
+                if isinstance(error, dict) and len(error) > 0:
+                    active = slugify(str(inline.formset.prefix))
+
+    return active

@@ -5,7 +5,10 @@ from django.contrib.auth.models import Group
 from django.core.validators import EMPTY_VALUES
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.html import format_html
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
+from import_export.admin import ImportExportModelAdmin
 
 from example.models import (
     ActionUser,
@@ -14,7 +17,9 @@ from example.models import (
     ColorChoices,
     FilterUser,
     Label,
+    Post,
     PriorityChoices,
+    Profile,
     Project,
     SectionUser,
     StatusChoices,
@@ -48,9 +53,21 @@ from unfold.contrib.filters.admin import (
     SliderNumericFilter,
     TextFilter,
 )
-from unfold.decorators import action
+from unfold.contrib.import_export.forms import (
+    ExportForm,
+    ImportForm,
+    SelectableFieldsExportForm,
+)
+from unfold.datasets import BaseDataset
+from unfold.decorators import action, display
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from unfold.paginator import InfinitePaginator
 from unfold.sections import TableSection, TemplateSection
+from unfold.widgets import (
+    UnfoldAdminCheckboxSelectMultipleWidget,
+    UnfoldAdminLocationWidget,
+    UnfoldAdminSelect2Widget,
+)
 
 admin.site.unregister(Group)
 
@@ -59,14 +76,160 @@ class UserTagInline(StackedInline):
     model = User.tags.through
     per_page = 1
     collapsible = True
+    tab = True
+
+    def get_queryset(self, request, *args, **kwargs):
+        qs = super().get_queryset(request, *args, **kwargs)
+        return qs.order_by("pk")
+
+
+class PostInline(StackedInline):
+    model = Post
+    ordering_field = "weight"
+    hide_ordering_field = True
+    list_display = ["title", "weight"]
+
+
+class ProjectDatasetModelAdmin(ModelAdmin):
+    pass
+
+
+class ProjectDataset(BaseDataset):
+    model = Project
+    model_admin = ProjectDatasetModelAdmin
+    tab = True
+
+
+class ExtendedUserChangeForm(UserChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["status"].widget = UnfoldAdminSelect2Widget(choices=StatusChoices)
+        self.fields["projects"].widget = UnfoldAdminCheckboxSelectMultipleWidget(
+            choices=Project.objects.all().values_list("id", "name")
+        )
+
+        self.fields["location"].widget = UnfoldAdminLocationWidget()
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin, ModelAdmin):
-    form = UserChangeForm
+class UserAdmin(BaseUserAdmin, ModelAdmin, ImportExportModelAdmin):
+    import_form_class = ImportForm
+    export_form_class = ExportForm
+    form = ExtendedUserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
-    inlines = [UserTagInline]
+    inlines = [UserTagInline, PostInline]
+    change_form_datasets = [
+        ProjectDataset,
+    ]
+    autocomplete_fields = ["tags"]
+    compressed_fields = True
+    readonly_fields = [
+        "custom_readonly_field",
+        "another_readonly_field",
+        "boolean_readonly_field",
+        "html_readonly_field",
+    ]
+    readonly_preprocess_fields = {
+        "custom_readonly_field": "html.unescape",
+        "another_readonly_field": lambda content: content.strip(),
+    }
+    list_display = (
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "content_type",
+        "is_staff",
+        "display_header",
+        "display_status",
+        "display_dropdown",
+        "display_datetime",
+        "display_username",
+    )
+    list_display_links = ["username", "content_type"]
+    list_editable = ["is_staff"]
+    ordering_field = "weight"
+    hide_ordering_field = True
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    # "username",
+                    "password",
+                    "boolean_readonly_field",
+                    "custom_readonly_field",
+                    "another_readonly_field",
+                    "html_readonly_field",
+                )
+            },
+        ),
+        (
+            _("Personal info"),
+            {
+                "fields": (
+                    ("first_name", "last_name"),
+                    "email",
+                    "status",
+                    "tags",
+                    "projects",
+                    "location",
+                    (),
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (
+            _("Permissions"),
+            {
+                "fields": (
+                    "username",  # Test the error count tab
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+                "classes": ["tab"],
+            },
+        ),
+        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+    )
+
+    @display(description="Custom readonly field")
+    def custom_readonly_field(self, obj):
+        return "Custom readonly field"
+
+    @display(description="Another readonly field")
+    def another_readonly_field(self, obj):
+        return "Another readonly field"
+
+    @display(description="HTML readonly field")
+    def html_readonly_field(self, obj):
+        return format_html("<b>HTML readonly field {}</b>", "example-value")
+
+    @display(description="Boolean readonly field", boolean=True)
+    def boolean_readonly_field(self, obj):
+        return True
+
+    @display(description="Status", label=True)
+    def display_status(self, obj):
+        return obj.status
+
+    @display(header=True)
+    def display_header(self, obj):
+        return "Custom header", "Description"
+
+    @display(description="Status", dropdown=True)
+    def display_dropdown(self, obj):
+        return {
+            "title": "Custom dropdown title",
+            "content": "template content",
+        }
+
+    def display_datetime(self, obj):
+        return now()
 
 
 class RelatedTableSection(TableSection):
@@ -75,6 +238,11 @@ class RelatedTableSection(TableSection):
     columns = [
         "object_id",
     ]
+
+
+class TagSection(TableSection):
+    related_name = "tags"
+    fields = ["name"]
 
 
 class SomeTemplateSection(TemplateSection):
@@ -656,10 +824,19 @@ class LabelAdmin(ModelAdmin):
 
 
 @admin.register(Project)
-class ProjectAdmin(ModelAdmin):
+class ProjectAdmin(ModelAdmin, ImportExportModelAdmin):
+    paginator = InfinitePaginator
+    list_per_page = 10
+    import_form_class = ImportForm
+    export_form_class = SelectableFieldsExportForm
     search_fields = ["name"]
 
 
 @admin.register(Task)
 class TaskAdmin(ModelAdmin):
+    search_fields = ["name"]
+
+
+@admin.register(Profile)
+class ProfileAdmin(ModelAdmin):
     search_fields = ["name"]
