@@ -20,6 +20,7 @@ from django.contrib.admin.widgets import (
     AdminURLFieldWidget,
     AdminUUIDInputWidget,
     ForeignKeyRawIdWidget,
+    RelatedFieldWidgetWrapper,
 )
 from django.db.models import ManyToOneRel
 from django.forms import (
@@ -164,21 +165,15 @@ CHECKBOX_CLASSES = [
     "block",
     "border",
     "border-base-300",
-    "cursor-pointer",
     "h-4",
     "min-w-4",
     "relative",
     "rounded-[4px]",
     "shadow-xs",
     "w-4",
-    "hover:border-base-400",
-    "dark:bg-base-700",
-    "dark:border-base-500",
+    "dark:bg-base-900",
+    "dark:border-base-700",
     "dark:checked:after:text-white",
-    "focus:outline",
-    "focus:outline-2",
-    "focus:outline-offset-2",
-    "focus:outline-primary-500",
     "after:absolute",
     r"after:content-['check\_small']",
     "after:flex!",
@@ -190,15 +185,12 @@ CHECKBOX_CLASSES = [
     "after:-ml-px",
     "after:-mt-px",
     "after:text-white",
-    "after:transition-all",
     "after:w-4",
-    "dark:after:text-base-700",
+    "dark:after:text-transparent",
     "checked:bg-primary-600",
     "dark:checked:bg-primary-600",
     "checked:border-primary-600",
     "dark:checked:border-primary-600",
-    "checked:transition-all",
-    "checked:hover:border-primary-600",
 ]
 
 RADIO_CLASSES = [
@@ -207,19 +199,13 @@ RADIO_CLASSES = [
     "block",
     "border",
     "border-base-300",
-    "cursor-pointer",
     "h-4",
     "min-w-4",
     "relative",
     "rounded-full",
     "w-4",
-    "dark:bg-base-700",
-    "dark:border-base-500",
-    "hover:border-base-400",
-    "focus:outline",
-    "focus:outline-2",
-    "focus:outline-offset-2",
-    "focus:outline-primary-500",
+    "dark:bg-base-900",
+    "dark:border-base-700",
     "after:absolute",
     "after:bg-transparent",
     "after:content-['']",
@@ -232,19 +218,15 @@ RADIO_CLASSES = [
     "after:rounded-full",
     "after:text-white",
     "after:top-1/2",
-    "after:transition-all",
     "after:-translate-x-1/2",
     "after:-translate-y-1/2",
-    "after:text-sm",
     "after:w-2",
     "dark:after:text-base-700",
     "dark:after:bg-transparent",
     "checked:bg-primary-600",
     "checked:border-primary-600",
-    "checked:transition-all",
     "checked:after:bg-white",
     "dark:checked:after:bg-base-900",
-    "checked:hover:border-base-900/20",
 ]
 
 SWITCH_CLASSES = [
@@ -979,6 +961,10 @@ class UnfoldAdminMultipleAutocompleteModelChoiceFieldWidget(
     option_template_name = (
         "unfold/widgets/select_option_modelchoicefield_autocomplete.html"
     )
+
+
+class UnfoldAdminRelatedFieldWrapperWidget(RelatedFieldWidgetWrapper):
+    template_name = "unfold/widgets/related_widget_wrapper.html"
 
 
 try:
