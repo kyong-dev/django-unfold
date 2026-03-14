@@ -908,3 +908,8 @@ def tabs_primary_active(inlines: list[InlineAdminFormSet]) -> str:
 @register.filter
 def unicoded_slugify(value: str) -> str:
     return slugify(value, allow_unicode=True)
+
+
+@register.filter
+def has_visible_items(items):
+    return any(item.get('has_permission') for item in items)
