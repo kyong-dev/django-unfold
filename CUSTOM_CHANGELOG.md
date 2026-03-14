@@ -89,3 +89,8 @@ def changelist_view(self, request, extra_context=None):
 
 - Table div error fixed
     modified: src/unfold/templates/unfold/components/table.html
+
+
+## 0.84.0.1 (2026-03-14)
+
+- Hide nav-bar items the logged-in user is not authorized to access.
