@@ -35,6 +35,10 @@
 
 - Changelist custom_select_filters & custom_filter_script
 
+## 0.89.0.1 (2026-06-09)
+
+- Changelist submit bug fixed
+
 ```python
 def changelist_view(self, request, extra_context=None):
     extra_context = extra_context or {}

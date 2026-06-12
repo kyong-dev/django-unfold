@@ -20,7 +20,7 @@
             name="_save"
             form="changelist-form"
             x-data="{ loading: false }"
-            @click.prevent="loading = true; $nextTick(() => $el.form.submit())"
+            @click.prevent="$el.form.requestSubmit($el); loading = true"
             :disabled="loading"
             class="bg-primary-600 block border border-transparent cursor-pointer font-medium px-3 py-2 rounded-default text-white w-full flex items-center justify-center"
         >
