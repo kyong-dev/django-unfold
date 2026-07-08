@@ -98,3 +98,21 @@ def changelist_view(self, request, extra_context=None):
 ## 0.84.0.1 (2026-03-14)
 
 - Hide nav-bar items the logged-in user is not authorized to access.
+
+
+## 0.89.0.4 (2026-06-13)
+
+- Changelist action/save button double-submit spinner
+    added:      src/unfold/static/unfold/js/PreventDoubleSubmitChangelist.js
+    modified:   src/unfold/templates/admin/change_list.html (script tag in {% block extrahead %})
+    added:      tests/test_prevent_double_submit.py (guards both double-submit patches against upstream rebases)
+    modified:   pyproject.toml (removed stale duplicate poetry-core [build-system] block left over from a merge — it made the TOML unparsable; name/version now committed as django-unfold-patrick)
+    modified:   src/unfold/admin.py (removed stale pre-mixin copies of get_actions_list/_detail/_row/_submit_line and _filter_unfold_actions_by_permissions — merge residue that shadowed ActionModelAdminMixin and crashed dict-style dropdown actions with "TypeError: attribute name must be string"; 203 tests failed because of it, also broken in published 0.89.0.1–0.89.0.3)
+    restored:   tests/__init__.py, tests/server/example/{__init__,settings,urls}.py, tests/server/example/migrations/__init__.py, tests/server/manage.py (test infra accidentally deleted by the 2025-03-02 "git cache cleared" commit — restored from merged upstream 6b62dcd; test suite was unrunnable without them)
+
+    Contract (consumer projects, e.g. siseon, depend on this):
+    - Always active for #changelist-form submits; any other form opts in via a data-spinner attribute.
+    - Spinner label comes from the button's data-spinner-label attribute, fallback "Processing…".
+    - Only the actually clicked button (ev.submitter) is swapped to a spinner.
+    - disabled is applied on the next tick so the submitter's name/value stays in the POST.
+    - Companion of PreventDoubleSubmit.js (change_form only) — template scopes do not overlap.

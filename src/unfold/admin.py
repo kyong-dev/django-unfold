@@ -1,5 +1,5 @@
 from functools import update_wrapper
-from typing import Optional, Tuple, Union, List, Any
+from typing import Any
 
 from django import forms
 from django.contrib.admin import ModelAdmin as BaseModelAdmin
@@ -38,8 +38,6 @@ from unfold.overrides import FORMFIELD_OVERRIDES_INLINE
 from unfold.typing import FieldsetsType
 from unfold.views import ChangeList
 from unfold.widgets import UnfoldBooleanWidget
-
-from unfold.dataclasses import UnfoldAction
 
 checkbox = UnfoldBooleanWidget(
     {
@@ -212,87 +210,7 @@ class ModelAdmin(
                     )
         return change_message
 
-    def _filter_unfold_actions_by_permissions(
-        self,
-        request: HttpRequest,
-        actions: List[UnfoldAction],
-        object_id: Optional[Union[int, str]] = None,
-    ) -> List[UnfoldAction]:
-        """Filter out any Unfold actions that the user doesn't have access to."""
-        filtered_actions = []
-        for action in actions:
-            if not hasattr(action.method, "allowed_permissions"):
-                filtered_actions.append(action)
-                continue
-
-            permission_checks = (
-                getattr(self, f"has_{permission}_permission")
-                for permission in action.method.allowed_permissions
-            )
-
-            if object_id:
-                if any(
-                    has_permission(request, object_id)
-                    for has_permission in permission_checks
-                ):
-                    filtered_actions.append(action)
-            else:
-                if any(has_permission(request) for has_permission in permission_checks):
-                    filtered_actions.append(action)
-
-        return filtered_actions
-
-    def get_actions_list(self, request: HttpRequest) -> List[UnfoldAction]:
-        return self._filter_unfold_actions_by_permissions(
-            request, self._get_base_actions_list()
-        )
-
-    def _get_base_actions_list(self) -> List[UnfoldAction]:
-        """
-        Returns all available list global actions, prior to any filtering
-        """
-        return [self.get_unfold_action(action) for action in self.actions_list or []]
-
-    def get_actions_detail(
-        self, request: HttpRequest, object_id: int
-    ) -> List[UnfoldAction]:
-        return self._filter_unfold_actions_by_permissions(
-            request, self._get_base_actions_detail(), object_id
-        )
-
-    def _get_base_actions_detail(self) -> List[UnfoldAction]:
-        """
-        Returns all available detail actions, prior to any filtering
-        """
-        return [self.get_unfold_action(action) for action in self.actions_detail or []]
-
-    def get_actions_row(self, request: HttpRequest) -> List[UnfoldAction]:
-        return self._filter_unfold_actions_by_permissions(
-            request, self._get_base_actions_row()
-        )
-
-    def _get_base_actions_row(self) -> List[UnfoldAction]:
-        """
-        Returns all available row actions, prior to any filtering
-        """
-        return [self.get_unfold_action(action) for action in self.actions_row or []]
-
-    def get_actions_submit_line(
-        self, request: HttpRequest, object_id: int
-    ) -> List[UnfoldAction]:
-        return self._filter_unfold_actions_by_permissions(
-            request, self._get_base_actions_submit_line(), object_id
-        )
-
-    def _get_base_actions_submit_line(self) -> List[UnfoldAction]:
-        """
-        Returns all available submit row actions, prior to any filtering
-        """
-        return [
-            self.get_unfold_action(action) for action in self.actions_submit_line or []
-        ]
-
-    def get_custom_urls(self) -> Tuple[Tuple[str, str, View], ...]:
+    def get_custom_urls(self) -> tuple[tuple[str, str, View], ...]:
         """
         Method to get custom views for ModelAdmin with their urls
 

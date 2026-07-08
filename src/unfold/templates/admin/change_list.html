@@ -18,6 +18,7 @@
 {% block extrahead %}
     {{ block.super }}
     {{ media.js }}
+    <script src="{% static 'unfold/js/PreventDoubleSubmitChangelist.js' %}"></script>
     {% if custom_filter_script %}
         {{ custom_filter_script|safe }}
     {% endif %}
