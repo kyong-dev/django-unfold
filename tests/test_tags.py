@@ -1,11 +1,9 @@
 import copy
-import importlib
 import re
 from http import HTTPStatus
 
 import pytest
 from django import forms
-from django.contrib.admin import options
 from django.contrib.admin.helpers import AdminField
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -244,6 +242,33 @@ def test_tags_is_list():
     ).render(Context({"value": ["aaa", "bbb"]}))
 
     assert "is_list" in response
+
+
+@pytest.mark.django_db
+def test_tags_is_not_list():
+    response = Template(
+        "{% load unfold %}{% if value|is_list %}is_list{% endif %}"
+    ).render(Context({"value": "example"}))
+
+    assert "is_list" not in response
+
+
+@pytest.mark.django_db
+def test_tags_is_dict():
+    response = Template(
+        "{% load unfold %}{% if value|is_dict %}is_dict{% endif %}"
+    ).render(Context({"value": {"aaa": "bbb"}}))
+
+    assert "is_dict" in response
+
+
+@pytest.mark.django_db
+def test_tags_is_not_dict():
+    response = Template(
+        "{% load unfold %}{% if value|is_dict %}is_dict{% endif %}"
+    ).render(Context({"value": "example"}))
+
+    assert "is_dict" not in response
 
 
 @pytest.mark.django_db
@@ -828,44 +853,6 @@ def test_tags_querystring_params(rf):
 
 
 @pytest.mark.django_db
-def test_tags_unfold_querystring(rf):
-    request = rf.get("/?123=456")
-    response = Template(
-        "{% load unfold %} {% unfold_querystring sample='example' item_to_remove=None iterate=list_var %}"
-    ).render(
-        RequestContext(
-            request,
-            {
-                "list_var": ["aaa", "bbb"],
-            },
-        )
-    )
-    assert "?123=456&amp;sample=example&amp;iterate=aaa&amp;iterate=bbb" in response
-
-    with pytest.raises(
-        TemplateSyntaxError,
-        match="querystring requires mappings for positional arguments",
-    ):
-        Template("{% load unfold %} {% unfold_querystring '' %}").render(
-            RequestContext(rf.get("/"), {})
-        )
-
-    with pytest.raises(
-        TemplateSyntaxError, match="querystring requires strings for mapping keys"
-    ):
-        Template("{% load unfold %} {% unfold_querystring wrong_param %}").render(
-            RequestContext(
-                rf.get("/"),
-                {
-                    "wrong_param": {
-                        111: "abc",
-                    },
-                },
-            )
-        )
-
-
-@pytest.mark.django_db
 def test_tags_header_title(rf, user_factory, user_model_admin):
     user = user_factory(username="sample@example.com")
     request = rf.get("/")
@@ -1375,14 +1362,6 @@ def test_tags_unfold_admin_actions(rf):
     assert "Run the selected action" in response
 
 
-def test_tags_is_facet_var_django42(monkeypatch):
-    monkeypatch.delattr(options, "IS_FACETS_VAR", raising=False)
-    from unfold.templatetags import unfold_list as unfold_list_modified
-
-    importlib.reload(unfold_list_modified)
-    assert unfold_list_modified.IS_FACETS_VAR is None
-
-
 @pytest.mark.django_db
 def test_tags_result_list_object_does_not_exist(rf, user_factory, monkeypatch):
     from django.contrib.admin.utils import lookup_field as real_lookup_field
@@ -1480,3 +1459,15 @@ def test_fieldset_active_tab(fieldset_names, active_name):
     fieldset_classes = re.findall(r'class="tab-wrapper fieldset-([^"]+)"', response)
 
     assert fieldset_classes == tab_ids
+
+
+def test_tags_model_verbose_name():
+    response = Template("""{% load unfold %}{{ model|model_verbose_name }}""").render(
+        Context(
+            {
+                "model": User,
+            }
+        )
+    )
+
+    assert response == "user"

@@ -18,6 +18,7 @@ CONFIG_DEFAULTS = {
     "SITE_SUBHEADER": None,
     "SITE_DROPDOWN": None,
     "SITE_URL": "/",
+    "SITE_VIEWS": [],
     "SITE_ICON": None,
     "SITE_SYMBOL": None,
     "SITE_LOGO": None,
@@ -25,8 +26,9 @@ CONFIG_DEFAULTS = {
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
     "SHOW_LANGUAGES": False,
-    "LANGUAGE_FLAGS": {},
     "SHOW_BACK_BUTTON": False,
+    "SHOW_UI_WARNINGS": False,
+    "LANGUAGE_FLAGS": {},
     "FORMS": {
         "classes": {
             "prose": " ".join(PROSE_CLASSES),
@@ -94,7 +96,6 @@ CONFIG_DEFAULTS = {
     },
     "SIDEBAR": {
         "show_search": False,
-        "command_search": False,
         "show_all_applications": False,
         "navigation": [],
     },
@@ -108,7 +109,7 @@ CONFIG_DEFAULTS = {
 }
 
 
-def get_config(settings_name=None):
+def get_config(settings_name: str | None = None) -> dict[str, Any]:
     if settings_name is None:
         settings_name = "UNFOLD"
 
