@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from os import environ
 from pathlib import Path
+from warnings import filterwarnings
 
 from django.core.management.utils import get_random_secret_key
 from django.utils.translation import gettext_lazy as _
@@ -19,6 +20,13 @@ AUTH_USER_MODEL = "example.User"
 
 USE_TZ = False
 
+# TODO: remove once the setting is removed
+filterwarnings(
+    "ignore", "The FORMS_URLFIELD_ASSUME_HTTPS transitional setting is deprecated."
+)
+
+FORMS_URLFIELD_ASSUME_HTTPS = True
+
 INSTALLED_APPS = [
     "unfold",
     "unfold.contrib.filters",
@@ -27,6 +35,10 @@ INSTALLED_APPS = [
     "unfold.contrib.import_export",
     "unfold.contrib.guardian",
     "unfold.contrib.simple_history",
+<<<<<<< HEAD
+=======
+    "unfold.contrib.hijack",
+>>>>>>> unfoldadmin-main
     "unfold.contrib.location_field",
     "unfold.contrib.constance",
     "django.contrib.admin",
@@ -39,6 +51,12 @@ INSTALLED_APPS = [
     "constance",
     "import_export",
     "location_field",
+<<<<<<< HEAD
+=======
+    "crispy_forms",
+    "hijack",
+    "hijack.contrib.admin",
+>>>>>>> unfoldadmin-main
 ]
 
 MIDDLEWARE = [
@@ -49,6 +67,10 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+<<<<<<< HEAD
+=======
+    "hijack.middleware.HijackUserMiddleware",
+>>>>>>> unfoldadmin-main
 ]
 
 ROOT_URLCONF = "example.urls"
@@ -99,6 +121,13 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+<<<<<<< HEAD
+=======
+CRISPY_TEMPLATE_PACK = "unfold_crispy"
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
+
+>>>>>>> unfoldadmin-main
 CONSTANCE_BACKEND = "constance.backends.database.DatabaseBackend"
 
 CONSTANCE_ADDITIONAL_FIELDS = {
@@ -186,3 +215,13 @@ CONSTANCE_CONFIG_FIELDSETS = OrderedDict(
         },
     }
 )
+<<<<<<< HEAD
+=======
+
+UNFOLD = {
+    "SITE_VIEWS": [
+        ("extra-url", "extra_url_name", "example.views.SiteExtraUrlView"),
+    ],
+    "TABS": "example.utils.tabs_callback",
+}
+>>>>>>> unfoldadmin-main
