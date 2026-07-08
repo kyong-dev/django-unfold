@@ -1,21 +1,11 @@
 {% load i18n unfold %}
 
 <div class="flex flex-col {% if class %}{{ class }}{% endif %}">
-<<<<<<< HEAD
-  {% if title %}
-  <h3
-    class="font-semibold mb-1 text-font-important-light text-sm dark:text-font-important-dark"
-  >
-    {{ title }}
-  </h3>
-  {% endif %}
-=======
     {% if title %}
         <h3 class="font-semibold mb-1 text-important text-sm">
             {{ title }}
         </h3>
     {% endif %}
->>>>>>> b3fe7755b26547b30c552d9a86d2ab269f1c3f5a
 
     <div class="{% if card_included == 1 %}{% if card_size == "md" %}-m-3{% else %}-m-6{% endif %}{% else %} bg-white border border-base-200 flex flex-col grow overflow-hidden rounded-default shadow-xs{% endif %} dark:border-base-800 dark:bg-base-900">
         <div {% if height %}style="max-height: {{ height }}px;"{% endif %} class="overflow-x-auto">
@@ -123,14 +113,5 @@
                 {% trans "No data" %}
             </p>
         {% endif %}
-      </table>
     </div>
-
-    {% if not table.rows %}
-    <p
-      class="bg-white border border-base-200 flex grow items-center justify-center py-2 rounded-default shadow-xs dark:bg-base-900 lg:border-0 lg:rounded-none lg:shadow-none"
-    >
-      {% trans "No data" %}
-    </p>
-    {% endif %}
 </div>

@@ -891,10 +891,10 @@ def unicoded_slugify(value: str) -> str:
 
 
 @register.filter
-<<<<<<< HEAD
 def has_visible_items(items):
     return any(item.get('has_permission') for item in items)
-=======
+
+
 def format_traceback(traceback: str) -> str:
     return prettify_traceback(traceback) or ""
 
@@ -902,4 +902,3 @@ def format_traceback(traceback: str) -> str:
 @register.filter
 def model_verbose_name(model: type[Model]) -> str:
     return str(model._meta.verbose_name)
->>>>>>> b3fe7755b26547b30c552d9a86d2ab269f1c3f5a

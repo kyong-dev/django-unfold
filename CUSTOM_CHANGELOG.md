@@ -116,3 +116,11 @@ def changelist_view(self, request, extra_context=None):
     - Only the actually clicked button (ev.submitter) is swapped to a spinner.
     - disabled is applied on the next tick so the submitter's name/value stays in the POST.
     - Companion of PreventDoubleSubmit.js (change_form only) — template scopes do not overlap.
+
+
+## 0.100.0.1 (2026-07-09)
+
+- Changelist crash + table merge-residue fixed (merge b3fe7755 was committed with unresolved conflict markers in three files)
+    modified:   src/unfold/templates/admin/change_list.html (botched conflict resolution left a duplicate inner {% block filters %} plus an unclosed <a> and {% if %} — two same-named blocks raise TemplateSyntaxError so the changelist would not render at all; removed the duplicate block, moved the change_list_filter_button.html include inside the anchor, closed </a> / {% endif %} / {% endblock %})
+    modified:   src/unfold/templates/unfold/components/table.html (resolved leftover <<<<<<< HEAD / ======= / >>>>>>> b3fe7755 markers in the title <h3> block; also removed a stray </table> and a duplicated {% if not table.rows %} "No data" block at the empty-table footer that rendered "No data" twice — matched the tail to the clean b3fe7755 structure: one "No data" <p> then </div></div>. Recurrence of the 0.67.0.1 "Table div error fixed" issue)
+    modified:   src/unfold/templatetags/unfold.py (resolved b3fe7755 markers at the end of the filter block — kept both sides: has_visible_items alongside format_traceback / model_verbose_name)
